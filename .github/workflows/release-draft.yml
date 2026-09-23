@@ -28,6 +28,10 @@ permissions: {}
 
 env:
   SOURCE_REPO: RedHorseMane/obravera-audio-auth
+  # No step checks anything out, so there is no .git for gh to infer the
+  # repository from: every `gh release` call needs this. (The first v0.8.0
+  # run failed without it: "not a git repository".)
+  GH_REPO: ${{ github.repository }}
 
 jobs:
   draft:
@@ -80,8 +84,14 @@ jobs:
           TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          if gh release view "${TAG}" >/dev/null 2>&1; then
+          # Only "release not found" means it is safe to create one. Any other
+          # failure (auth, network, wrong repository) must stop here rather
+          # than pass as "no release yet".
+          if out=$(gh release view "${TAG}" --json tagName 2>&1); then
             echo "::error::Release ${TAG} already exists. Delete it or pick another tag."
+            exit 1
+          elif [[ "${out}" != *"release not found"* ]]; then
+            echo "::error::Could not check whether ${TAG} exists: ${out}"
             exit 1
           fi
           # Draft: nothing is downloadable, and /releases/latest — which the

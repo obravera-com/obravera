@@ -30,6 +30,11 @@ on:
 
 permissions: {}
 
+env:
+  # No job checks anything out, so there is no .git for gh to infer the
+  # repository from: every `gh release` call needs this.
+  GH_REPO: ${{ github.repository }}
+
 jobs:
   assets:
     name: Check the release has everything
