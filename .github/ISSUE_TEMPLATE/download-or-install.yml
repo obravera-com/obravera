@@ -1,0 +1,40 @@
+name: A download or install problem
+description: The file will not download, will not open, or the wrong one was installed
+title: "Install: "
+labels: ["install"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        For problems using the application once it is running, please email
+        the pilot address instead — the source is not public, so those are
+        better discussed privately.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Which download
+      options:
+        - macOS — Apple silicon (ObraVera-arm64.dmg)
+        - macOS — Intel (ObraVera-x86_64.dmg)
+        - Windows pilot kit
+        - I am not sure which I need
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Your operating system version
+      description: "macOS: Apple menu -> About This Mac. Windows: Settings -> System -> About."
+      placeholder: macOS 15.1
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: >-
+        Including the exact wording of any warning. "Windows protected your
+        PC" and "cannot be opened because the developer cannot be verified"
+        mean different things and we will want to know which you saw.
+    validations:
+      required: true

@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: A problem with the ObraVera application itself
+    url: mailto:brady@obravera.com
+    about: >-
+      Bugs, questions and feedback about the application go to the pilot
+      address. The source code is not public, so they cannot be discussed
+      usefully here.
+  - name: You think a download was altered, not merely corrupted
+    url: https://github.com/obravera-com/obravera/security/advisories/new
+    about: >-
+      Report this privately rather than in a public issue. A corrupted
+      download is ordinary; a tampered one is not, and it should be looked
+      at before it is discussed in the open.

@@ -1,0 +1,73 @@
+name: A download did not verify
+description: A checksum, signature or notarisation check failed
+title: "Verification failed: "
+labels: ["verification"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for checking — most people do not, and this is the report
+        we most want to receive.
+
+        **If you believe the file was deliberately altered rather than
+        corrupted in transit, please close this and use
+        [private reporting](https://github.com/obravera-com/obravera/security/advisories/new)
+        instead.** A tampered download should be looked at before it is
+        discussed in the open.
+
+        Please do not install the file until this is resolved.
+  - type: input
+    id: release
+    attributes:
+      label: Which release
+      description: The version on the release page, e.g. v0.8.0
+      placeholder: v0.8.0
+    validations:
+      required: true
+  - type: input
+    id: asset
+    attributes:
+      label: Which file
+      placeholder: ObraVera-arm64.dmg
+    validations:
+      required: true
+  - type: dropdown
+    id: check
+    attributes:
+      label: Which check failed
+      options:
+        - shasum -a 256 -c SHA256SUMS (checksum)
+        - codesign --verify (signature)
+        - xcrun stapler validate (notarisation ticket)
+        - spctl --assess (Gatekeeper)
+        - More than one of these
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: The command you ran, and exactly what it printed
+      description: >-
+        Please paste it rather than describing it — the wording is what
+        tells us whether this is a corrupted download or something else.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Where you downloaded it from
+      description: >-
+        The releases page, a link someone sent you, or somewhere else. If it
+        was not from this repository, that is useful to know and not a
+        criticism.
+      placeholder: https://github.com/obravera-com/obravera/releases/latest
+    validations:
+      required: true
+  - type: checkboxes
+    id: retried
+    attributes:
+      label: Before reporting
+      options:
+        - label: I downloaded the file again and the check still failed
+          required: false

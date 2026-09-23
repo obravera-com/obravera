@@ -127,12 +127,29 @@ chain back to a named developer.
 
 ## Reporting a problem
 
-- **A failed verification**, an unexpected signature, or a download that does
-  not match its checksum: please report this before anything else.
-- **Bugs and questions** about the application itself: contact the address
-  you were given when you joined the pilot.
+Three different things, three different places — the routing matters more
+than it looks, so each is spelled out.
 
-The application's source code is not public.
+**A download did not verify.** A failed checksum, a signature that will not
+validate, a missing notarisation ticket:
+[open an issue](https://github.com/obravera-com/obravera/issues/new/choose).
+There is a form that asks for the command you ran and what it printed — the
+exact wording is what distinguishes a download corrupted in transit from
+anything else. **Please do not install the file** while this is open. This is
+the report we most want to receive, and most people never check at all.
+
+**You think a file was deliberately altered** rather than corrupted:
+[report it privately](https://github.com/obravera-com/obravera/security/advisories/new)
+instead of opening an issue. A corrupted download is ordinary; a tampered one
+is not, and it should be looked at before it is discussed in the open.
+
+**A download or install problem** — the wrong build for your machine, a
+warning you did not expect, a file that will not open: there is a form for
+that too, on the same page.
+
+**Anything about the application itself** — bugs, questions, feedback:
+**brady@obravera.com**. The source code is not public, so those cannot be
+discussed usefully here.
 
 ---
 
