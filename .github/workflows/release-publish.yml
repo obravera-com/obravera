@@ -31,8 +31,78 @@ on:
 permissions: {}
 
 jobs:
+  assets:
+    name: Check the release has everything
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Every expected asset must be attached, and finished uploading
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          # The one place the expected set is written down. If a platform is
+          # ever dropped — the Intel build, or the Windows kit — remove its
+          # line here rather than discovering the gap at publish time.
+          #
+          # The Windows kit is attached BY HAND: it cannot be built in CI,
+          # because scripts/pilot-kit/deps-windows/ is not tracked by git.
+          # Forgetting it would otherwise publish a release whose Windows
+          # download 404s while the macOS ones work, which reads as a broken
+          # page rather than a missing file. That is the case this job exists
+          # for.
+          expected=(
+            "ObraVera-arm64.dmg"
+            "ObraVera-x86_64.dmg"
+            "obravera-pilot-kit-windows-amd64.zip"
+          )
+
+          rows=$(gh release view "${TAG}" --json assets \
+                   --jq '.assets[] | "\(.name)\t\(.state)\t\(.size)"')
+          echo "Attached:"
+          printf '%s\n' "${rows:-  (nothing)}" | sed 's/^/  /'
+          echo
+
+          problems=0
+          for want in "${expected[@]}"; do
+            row=$(printf '%s\n' "$rows" | awk -F'\t' -v n="$want" '$1 == n')
+            if [ -z "$row" ]; then
+              echo "::error::missing asset: ${want}"
+              problems=1
+              continue
+            fi
+            state=$(printf '%s' "$row" | cut -f2)
+            size=$(printf '%s' "$row" | cut -f3)
+            # A failed upload can leave an asset attached but unusable.
+            if [ "$state" != "uploaded" ]; then
+              echo "::error::${want} is in state '${state}', not 'uploaded'"
+              problems=1
+            elif [ "${size:-0}" -le 0 ]; then
+              echo "::error::${want} is ${size} bytes"
+              problems=1
+            fi
+          done
+
+          # Anything else is reported but not fatal: SHA256SUMS is written by
+          # the next job, and a re-run will legitimately find it here.
+          while IFS=$'\t' read -r name _ _; do
+            [ -z "$name" ] && continue
+            [ "$name" = "SHA256SUMS" ] && continue
+            printf '%s\n' "${expected[@]}" | grep -qxF "$name" \
+              || echo "::warning::unexpected asset on the release: ${name}"
+          done <<< "$rows"
+
+          if [ "$problems" -ne 0 ]; then
+            echo "::error::Refusing to publish an incomplete release. Attach the missing asset(s) to the draft, then run this again."
+            exit 1
+          fi
+          echo "All ${#expected[@]} expected assets are attached and uploaded."
+
   verify:
     name: Gatekeeper check — ${{ matrix.arch }}
+    needs: assets
     strategy:
       fail-fast: false
       matrix:
@@ -109,7 +179,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: [verify, checksums]
+    needs: [assets, verify, checksums]
     runs-on: ubuntu-latest
     permissions:
       contents: write
