@@ -1,0 +1,126 @@
+# ObraVera release, stage 2 of 2 — check what was uploaded, then publish.
+#
+# THIS FILE DOES NOT RUN HERE. It is copied into the public releases repo
+# (obravera-com/obravera) at .github/workflows/release-publish.yml.
+#
+# Run this after the locally-built DMGs have been uploaded to the draft.
+#
+# **It holds no secrets at all.** Verifying a signature needs only the public
+# certificate chain, which is embedded in the artefact; the private key was
+# used once, on Brady's Mac, and is never needed again. That is what makes
+# this stage possible without the certificate being anywhere near GitHub.
+#
+# The check that earns its keep is `verify`: it downloads each DMG onto a
+# fresh Mac that has never seen ObraVera and asks whether Gatekeeper would
+# accept it. A DMG that was signed but not notarised, or notarised but not
+# stapled, looks perfectly fine on the machine that built it — the ticket is
+# already in the local database — and fails on a tester's. This catches that
+# before anyone can download it, which is exactly the class of problem a
+# manual release process produces.
+
+name: Release — publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Draft release tag to check and publish (e.g. v0.8.0)"
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  verify:
+    name: Gatekeeper check — ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Each DMG is checked on its own architecture, which is what a
+          # tester's machine does. Pinned rather than macos-latest: that
+          # label has already moved to macOS 26 and will move again, and
+          # macos-14 is unsupported from 2026-11-02.
+          - arch: arm64
+            runner: macos-15
+            asset: ObraVera-arm64.dmg
+          - arch: intel
+            runner: macos-15-intel
+            asset: ObraVera-x86_64.dmg
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    steps:
+      - name: Download the attached DMG
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          # Fails loudly if the asset is absent: publishing a release that is
+          # missing an architecture is a silent way to strand every tester on
+          # that platform.
+          gh release download "${TAG}" --pattern "${{ matrix.asset }}" --clobber
+
+      - name: Would a tester's Mac accept this?
+        run: |
+          set -euo pipefail
+          asset="${{ matrix.asset }}"
+          # Signature: intact, and every nested binary too.
+          codesign --verify --deep --strict --verbose=2 "$asset"
+          # Notarisation ticket present in the file, so validation works with
+          # no network. This is the one that fails when stapling was skipped.
+          xcrun stapler validate "$asset"
+          # What Gatekeeper actually decides.
+          spctl --assess --type open --context context:primary-signature \
+            --verbose=2 "$asset"
+          echo "$asset would be accepted."
+
+      - name: Show who signed it
+        run: |
+          set -euo pipefail
+          # Printed into the run log so the release has a durable record of
+          # which identity signed it — a public certificate, not a secret.
+          codesign --display --verbose=4 "${{ matrix.asset }}" 2>&1 \
+            | grep -E "Authority|TeamIdentifier|Timestamp" || true
+
+  checksums:
+    name: SHA256SUMS
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checksum every attached asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p assets && cd assets
+          # Computed from what is actually attached, not from what was built
+          # locally — the file a tester downloads is the one that has to match
+          # the published checksum.
+          gh release download "${TAG}" --clobber
+          rm -f SHA256SUMS
+          shasum -a 256 -- * > SHA256SUMS
+          cat SHA256SUMS
+          gh release upload "${TAG}" SHA256SUMS --clobber
+
+  publish:
+    name: Publish
+    needs: [verify, checksums]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Make the release visible
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          # Only now does /releases/latest change, so only now does anyone
+          # running the previous version see the in-app update notice (V6).
+          gh release edit "${TAG}" --draft=false --latest
+          echo "Published. Machines on the previous version will now see the update notice."

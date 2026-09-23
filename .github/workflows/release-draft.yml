@@ -1,0 +1,94 @@
+# ObraVera release, stage 1 of 2 — open a draft to build into.
+#
+# THIS FILE DOES NOT RUN HERE. It is copied into the public releases repo
+# (obravera-com/obravera) at .github/workflows/release-draft.yml. See
+# README.md beside it.
+#
+# Option B: the DMGs are built, signed, notarised and stapled on Brady's own
+# Macs, exactly as they are today. The Developer ID certificate never leaves
+# them, and no macOS build runner is involved. This stage only checks that
+# the tag is one CI passed, and opens an empty draft release to upload into.
+#
+# The certificate is the most valuable secret in the project — anyone holding
+# it can sign software macOS trusts as ObraVera, for every tester, until it
+# is revoked. Not copying it anywhere is the strongest control available, and
+# it costs one manual step per release.
+
+name: Release — open draft
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag in the source repo this release is built from (e.g. v0.8.0)"
+        required: true
+        type: string
+
+permissions: {}
+
+env:
+  SOURCE_REPO: RedHorseMane/obravera-audio-auth
+
+jobs:
+  draft:
+    name: Verify the tag, then open the draft
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Mint a read-only token for the private source
+        id: token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.SOURCE_READER_APP_ID }}
+          private-key: ${{ secrets.SOURCE_READER_PRIVATE_KEY }}
+          owner: RedHorseMane
+          repositories: obravera-audio-auth
+
+      - name: Refuse a tag whose CI did not pass
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          # The build happens on a laptop, so this is the only automated link
+          # between what ships and what was tested. It records which commit
+          # the release corresponds to, and refuses one that never went green.
+          sha=$(gh api "repos/${SOURCE_REPO}/commits/${TAG}" --jq .sha)
+          echo "${TAG} = ${sha}"
+          total=$(gh api "repos/${SOURCE_REPO}/commits/${sha}/check-runs" --jq '.total_count')
+          if [ "${total}" -eq 0 ]; then
+            echo "::error::No check runs found for ${sha}. Refusing to open a release for an untested commit."
+            exit 1
+          fi
+          bad=$(gh api "repos/${SOURCE_REPO}/commits/${sha}/check-runs" \
+                  --jq '[.check_runs[]
+                         | select(.conclusion != "success"
+                                  and .conclusion != "skipped"
+                                  and .conclusion != "neutral")
+                         | .name] | join(", ")')
+          if [ -n "${bad}" ]; then
+            echo "::error::These checks did not pass on ${sha}: ${bad}"
+            exit 1
+          fi
+          echo "All ${total} checks passed."
+          echo "SOURCE_SHA=${sha}" >> "$GITHUB_ENV"
+
+      - name: Open the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "::error::Release ${TAG} already exists. Delete it or pick another tag."
+            exit 1
+          fi
+          # Draft: nothing is downloadable, and /releases/latest — which the
+          # in-app update notice reads (V6) — ignores drafts entirely. Nobody
+          # is told about this release until stage 2 publishes it.
+          gh release create "${TAG}" \
+            --draft \
+            --title "ObraVera ${TAG}" \
+            --notes "Built from ${SOURCE_SHA}. Release notes to be written before publishing."
+          echo "Draft open. Build and sign locally, upload the DMGs, then run 'Release — publish'."
