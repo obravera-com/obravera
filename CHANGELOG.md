@@ -50,7 +50,9 @@ checking the file on a computer.
 **Known limitations**
 - The Windows kit isn't code-signed yet.
 - On long files the window can show "Not Responding" while it works. Leave it
-  to finish; this is addressed in 0.8.1.
+  to finish, and don't click Embed again while it's busy: a second click
+  starts a second embed. Addressed in 0.8.1.
+- Single-file embed accepts WAV and MP3; convert other formats to WAV first.
 
 **Open source**: each download includes `THIRD-PARTY-NOTICES.txt`; sources are
 at [Third-party sources for ObraVera 0.8.0](https://github.com/obravera-com/obravera/releases/tag/third-party-sources-0.8.0).
