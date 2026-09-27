@@ -4,6 +4,7 @@ This repository distributes the ObraVera desktop application. **It contains
 no source code.** Releases only.
 
 Downloads are on the [Releases page](https://github.com/obravera-com/obravera/releases/latest).
+What changed in each version: [What's new](CHANGELOG.md).
 
 ---
 
