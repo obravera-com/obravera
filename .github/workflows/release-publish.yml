@@ -40,7 +40,10 @@ jobs:
     name: Check the release has everything
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      # write, not read: GitHub shows a DRAFT release only to a token that can
+      # write to the repository. With read, `gh release view` answered "release
+      # not found" and the first real publish (v0.8.0, 2026-09-27) stopped here.
+      contents: write
     steps:
       - name: Every expected asset must be attached, and finished uploading
         env:
@@ -124,7 +127,7 @@ jobs:
             asset: ObraVera-x86_64.dmg
     runs-on: ${{ matrix.runner }}
     permissions:
-      contents: read
+      contents: write # to download the DMG from the draft (see assets)
     steps:
       - name: Download the attached DMG
         env:
