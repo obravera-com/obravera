@@ -6,6 +6,54 @@ downloads, are on the
 
 ---
 
+## 0.8.1 (October 2026)
+
+**A maintenance release.** Every audio tool ObraVera ships is now built by us
+from published source, the window stays responsive while it embeds, and a few
+verification results now say what actually happened.
+
+**New**
+- **Verify shows the watermark strength** the work was embedded at. Works
+  embedded before 0.8.1 show "not recorded".
+
+**Changed**
+- **Embedding no longer freezes the window.** It runs in the background, and a
+  second click on Embed while it's working is ignored.
+- **The strength range is advice, not a rule.** 5–20 is recommended (15 is the
+  default); outside it the app warns you and goes ahead.
+- **Audio tools built from published source** (audiowmark, FFmpeg, fpcalc).
+  Existing works keep the same fingerprints and watermarks: checked on every
+  platform before release.
+- A file neither the old nor the new FFmpeg can properly decode now fails with
+  an error instead of being credentialed as noise.
+
+**Fixed**
+- Verify in an open window finds works the folder-watching agent has just
+  credentialed, without a restart.
+- An unwatermarked copy of a work is reported as "recognised, not verified",
+  not as a verified, edited copy.
+- Verify finds watermarks in audio that has been sped up or slowed down
+  (about 0.8× to 1.25×).
+- Embedding only accepts WAV and MP3, and checks before it touches the file.
+- The folder-watching agent registers the AI-usage declaration you chose.
+- Clearer API key messages; verification reports show file text as plain text.
+
+**Known limitations**
+- The Windows kit is a pilot kit (run `install.ps1`); its scripts and tools are
+  now code-signed.
+- On Windows, small black windows flash briefly while you embed or verify.
+  Harmless; fixed in the next release.
+- An MP3 embedded with AudioSeal alone may not verify. Use Standard
+  (audiowmark), the default.
+- AudioSeal is still slow on older Intel Macs.
+- French translations of the new messages haven't been reviewed by a native
+  speaker yet.
+
+**Open source**: each download includes `THIRD-PARTY-NOTICES.txt`; sources are
+at [Third-party sources for ObraVera 0.8.1](https://github.com/obravera-com/obravera/releases/tag/third-party-sources-0.8.1).
+
+---
+
 ## 0.8.0 (September 2026)
 
 **The phone release.** A work can now be checked by holding a phone up to a
