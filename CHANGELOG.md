@@ -6,6 +6,44 @@ downloads, are on the
 
 ---
 
+## 0.8.2 (October 2026)
+
+**The Intel Mac fix.** The 0.8.1 download for Intel Macs doesn't open: by
+mistake it was built on an Apple Silicon Mac. 0.8.2 is a proper Intel build,
+and the build now refuses to continue if it finds this mistake. On an Apple
+Silicon Mac or Windows, 0.8.1 works and there's no hurry to update.
+
+**Fixed**
+- **Intel Macs: the app opens.** 0.8.1's Intel download showed a white circle
+  with a line through it.
+- **Works embedded while the server is unreachable are queued and sent
+  later**, instead of being reported "Not registered" and forgotten.
+- One problem entry in that queue no longer holds up the rest; works the server
+  refuses are set aside and shown to you with its reason; nothing is lost if a
+  retry is interrupted, and the window no longer freezes while the queue is
+  sent.
+
+**Unchanged**
+- The audio tools are the same as 0.8.1's, so watermarks and fingerprints are
+  exactly as before. Your API key, works and settings carry over.
+
+**Known limitations**
+- The Windows kit is a pilot kit (run `install.ps1`); its scripts and tools are
+  code-signed.
+- On Windows, small black windows still flash briefly while you embed or
+  verify. Harmless; 0.8.1 said this would be fixed in the next release, but
+  0.8.2 is only the Intel fix, so it's now planned for 0.9.0.
+- An MP3 embedded with AudioSeal alone may not verify. Use Standard
+  (audiowmark), the default.
+- AudioSeal is still slow on older Intel Macs.
+- French translations of the new messages haven't been reviewed by a native
+  speaker yet.
+
+**Open source**: each download includes `THIRD-PARTY-NOTICES.txt`; sources are
+at [Third-party sources for ObraVera 0.8.2](https://github.com/obravera-com/obravera/releases/tag/third-party-sources-0.8.2).
+
+---
+
 ## 0.8.1 (October 2026)
 
 **A maintenance release.** Every audio tool ObraVera ships is now built by us
