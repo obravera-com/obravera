@@ -36,7 +36,8 @@ env:
 jobs:
   draft:
     name: Verify the tag, then open the draft
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04 under us (#297).
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
